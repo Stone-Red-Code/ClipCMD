@@ -4,7 +4,7 @@
 
 ## What is it?
 
-ClipCMD is a window app that allows you to create macros and run them by copying them to the clipboard.
+ClipCMD is a windows app that allows you to create macros and run them by copying them to the clipboard.
 You write a macro anywhere, copy it to your clipboard and it will be automatically replaced by the specified macro text.
 
 ### Example
