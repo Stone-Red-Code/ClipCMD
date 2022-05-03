@@ -29,5 +29,4 @@ You write a macro anywhere, copy it to your clipboard and it will be automatical
 1. Write `[suffix][macroName][preffix]` somewhere, and then select it and press ``CTRL+C``
 
 ## Preview
-
-<!--insert image-->
+<img width="589" alt="Screenshot 2022-05-03 221232" src="https://user-images.githubusercontent.com/56473591/166560142-9e89c57f-1af0-4340-9317-dacf0064d6c8.png">
