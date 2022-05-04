@@ -12,9 +12,9 @@ You write a macro anywhere, copy it to your clipboard and it will be automatical
 > Prefix: `_`\
 > Suffix: `_`\
 > Macro name: `email`\
-> Macro text: `myCoolEmail@mail.com`\
+> Macro text: `myCoolEmail@mail.com`
 
-> Input: `_email_`
+> Input: `_email_`\
 > Output: `myCoolEmail@mail.com`
 
 ## Usage
