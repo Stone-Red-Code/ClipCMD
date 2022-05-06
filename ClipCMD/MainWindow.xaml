@@ -5,14 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClipCMD"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="ClipCMD" Height="450" Width="800">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label Content="Prefix" />
+            <Label Content="Prefix:" Width="45" />
             <TextBox x:Name="prefixTextBox" KeyUp="FixTextBox_TextChanged" Text="01" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label Content="Suffix" />
+            <Label Content="Suffix:" Width="45" />
             <TextBox x:Name="suffixTextBox" KeyUp="FixTextBox_TextChanged" Text="01" />
         </StackPanel>
 

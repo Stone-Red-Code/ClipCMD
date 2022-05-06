@@ -127,7 +127,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            logListBox.Items.Add($"Error: {ex.Message}");
+            logListBox.Items.Insert(0, $"Error: {ex.Message}");
             Debug.WriteLine(ex);
         }
     }
