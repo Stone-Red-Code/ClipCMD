@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     {
         { "time", (_) => DateTime.Now.ToShortTimeString() },
         { "date", (_) => DateTime.Now.ToShortDateString() },
-        { "calc", (math) => new DataTable().Compute(math.Trim()[4..], null)?.ToString() ?? string.Empty }
+        { "calc", (math) => new DataTable().Compute(math.Trim()[4..], null)?.ToString() ?? string.Empty },
     };
 
     public MainWindow()
@@ -150,6 +150,7 @@ public partial class MainWindow : Window
         else
         {
             staticCommandsTextBox.Foreground = Brushes.Black;
+            stuffToReplace["list"] = (_) => string.Join(", ", staticCommandsTextBox.Text.Split('\n').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Split('>').FirstOrDefault()?.Trim()));
             File.WriteAllText("cmd.txt", staticCommandsTextBox.Text);
         }
     }
