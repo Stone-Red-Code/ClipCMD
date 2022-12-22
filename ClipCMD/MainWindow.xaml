@@ -24,7 +24,7 @@
 
             <DockPanel Grid.Column="0">
                 <Label DockPanel.Dock="Top" Content="Static Commands:" />
-                <TextBox DockPanel.Dock="Top" x:Name="staticCommandsTextBox" TextChanged="StaticCommandsTextBox_TextChanged" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Stretch" />
+                <TextBox DockPanel.Dock="Top" x:Name="commandsTextBox" TextChanged="StaticCommandsTextBox_TextChanged" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Stretch" />
             </DockPanel>
 
             <DockPanel Grid.Column="1">

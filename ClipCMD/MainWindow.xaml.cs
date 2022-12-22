@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Management.Automation;
+using System.Text;
 using System.Windows;
 using System.Windows.Media;
 
@@ -17,33 +18,38 @@ namespace ClipCMD;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private readonly Dictionary<string, Func<string, string>> stuffToReplace = new()
-    {
-        { "time", (_) => DateTime.Now.ToShortTimeString() },
-        { "date", (_) => DateTime.Now.ToShortDateString() },
-        { "calc", (math) => new DataTable().Compute(math.Trim()[4..], null)?.ToString() ?? string.Empty },
-    };
+    private readonly Dictionary<string, string> commands = new Dictionary<string, string>();
+
+    private readonly string cmdPath;
+    private readonly string fixPath;
 
     public MainWindow()
     {
         InitializeComponent();
+
+        string filePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string workPath = Path.GetDirectoryName(filePath) ?? "/";
+
+        cmdPath = Path.Combine(workPath, "cmd.txt");
+        fixPath = Path.Combine(workPath, "fix.txt");
     }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
 
-        // Initialize the clipboard now that we have a window soruce to use
+        // Initialize the clipboard now that we have a window source to use
         ClipboardManager windowClipboardManager = new ClipboardManager(this);
         windowClipboardManager.ClipboardChanged += ClipboardManager_ClipboardChanged;
 
-        if (File.Exists("cmd.txt"))
+        if (File.Exists(cmdPath))
         {
-            staticCommandsTextBox.Text = File.ReadAllText("cmd.txt");
+            commandsTextBox.Text = File.ReadAllText(cmdPath);
         }
-        if (File.Exists("fix.txt"))
+
+        if (File.Exists(fixPath))
         {
-            string[] lines = File.ReadAllLines("fix.txt");
+            string[] lines = File.ReadAllLines(fixPath);
             if (lines.Length == 2)
             {
                 prefixTextBox.Text = lines[0];
@@ -51,7 +57,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                File.Delete("fix.txt");
+                File.Delete(fixPath);
             }
         }
     }
@@ -60,70 +66,50 @@ public partial class MainWindow : Window
 
     private void ClipboardManager_ClipboardChanged(object? sender, EventArgs e)
     {
-        if (!Clipboard.ContainsText() || oldData is not null && Clipboard.IsCurrent(oldData))
+        if (!Clipboard.ContainsText() || (oldData is not null && Clipboard.IsCurrent(oldData)))
         {
             return;
         }
 
         try
         {
-            bool result = SafeRepeat.Start(() => Clipboard.GetText().Trim(), 100, out string? text);
+            bool result = SafeRepeat.Start(() => Clipboard.GetText().Trim(), 100, out string? clipboardText);
 
-            if (!result || text is null)
+            if (!result || clipboardText is null)
             {
                 return;
             }
 
-            if (!text.StartsWith(prefixTextBox.Text) || !text.EndsWith(suffixTextBox.Text))
+            if (!clipboardText.StartsWith(prefixTextBox.Text) || !clipboardText.EndsWith(suffixTextBox.Text))
             {
                 oldData = Clipboard.GetDataObject();
                 return;
             }
 
-            text = text[prefixTextBox.Text.Length..^suffixTextBox.Text.Length].Trim();
+            clipboardText = clipboardText[prefixTextBox.Text.Length..^suffixTextBox.Text.Length].Trim();
 
-            Func<string, string>? func = stuffToReplace.FirstOrDefault(v => text.StartsWith(v.Key)).Value;
-
-            string logText = text;
-            string? outText;
-
-            if (func is null)
+            if (!commands.TryGetValue(clipboardText, out string? script))
             {
-                string[]? parts = staticCommandsTextBox.Text.Split('\n').FirstOrDefault(l =>
-                {
-                    if (string.IsNullOrWhiteSpace(l))
-                    {
-                        return false;
-                    }
-
-                    string? startText = l.Trim().Split('>').FirstOrDefault()?.Trim();
-                    return startText is not null && text == startText;
-                })?.Split('>');
-
-                if (parts?.Length == 2)
-                {
-                    outText = parts[1];
-                }
-                else
-                {
-                    oldData = Clipboard.GetDataObject();
-                    return;
-                }
-            }
-            else
-            {
-                outText = func(text);
+                oldData = Clipboard.GetDataObject();
+                return;
             }
 
-            outText = outText.Trim();
-            logListBox.Items.Insert(0, $"{logText} > {outText}");
+            PowerShell ps = PowerShell.Create().AddScript(script);
+            StringBuilder outText = new StringBuilder();
 
-            Clipboard.SetDataObject(outText);
+            foreach (PSObject commandResult in ps.Invoke())
+            {
+                _ = outText.AppendLine(commandResult.ToString());
+            }
+
+            logListBox.Items.Insert(0, $"{clipboardText} > {outText.ToString().TrimEnd()}");
+
+            Clipboard.SetText(outText.ToString().TrimEnd());
 
             oldData = Clipboard.GetDataObject();
 
             InputSimulator inputSimulator = new InputSimulator();
-            inputSimulator.Keyboard.KeyPress(new[] { VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V });
+            _ = inputSimulator.Keyboard.ModifiedKeyStroke(new[] { VirtualKeyCode.CONTROL }, new[] { VirtualKeyCode.VK_V });
         }
         catch (Exception ex)
         {
@@ -134,25 +120,55 @@ public partial class MainWindow : Window
 
     private void StaticCommandsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        bool isError = false;
-        foreach (string line in staticCommandsTextBox.Text.Split('\n'))
+        //TODO parse commands
+
+        string[] lines = commandsTextBox.Text.Split('\n').Append("[#END#]").ToArray();
+        string commandNames = string.Empty;
+        StringBuilder script = new StringBuilder();
+
+        commandsTextBox.Foreground = Brushes.Black;
+        commands.Clear();
+
+        foreach (string l in lines)
         {
-            if (!string.IsNullOrWhiteSpace(line) && line.Count(c => c == '>') != 1)
+            string line = l.Trim('\n', '\r');
+
+            if (line.StartsWith('[') && line.EndsWith(']'))
             {
-                isError = true;
+                if (!string.IsNullOrEmpty(commandNames))
+                {
+                    foreach (string commandName in commandNames.Split(','))
+                    {
+                        if (!string.IsNullOrWhiteSpace(commandName) && commands.TryAdd(commandName.Trim(), script.ToString()))
+                        {
+                            commandsTextBox.Foreground = Brushes.Black;
+                        }
+                        else
+                        {
+                            commandsTextBox.Foreground = Brushes.Red;
+                            return;
+                        }
+                    }
+                }
+
+                commandNames = line.Trim()[1..^1].Trim();
+                script = new StringBuilder();
+            }
+            else if (!string.IsNullOrEmpty(commandNames))
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    _ = script.AppendLine(line);
+                }
+            }
+            else
+            {
+                commandsTextBox.Foreground = Brushes.Red;
+                return;
             }
         }
 
-        if (isError)
-        {
-            staticCommandsTextBox.Foreground = Brushes.Red;
-        }
-        else
-        {
-            staticCommandsTextBox.Foreground = Brushes.Black;
-            stuffToReplace["list"] = (_) => string.Join(", ", staticCommandsTextBox.Text.Split('\n').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Split('>').FirstOrDefault()?.Trim()));
-            File.WriteAllText("cmd.txt", staticCommandsTextBox.Text);
-        }
+        File.WriteAllText(cmdPath, commandsTextBox.Text);
     }
 
     private void FixTextBox_TextChanged(object sender, System.Windows.Input.KeyEventArgs e)
@@ -162,6 +178,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        File.WriteAllLines("fix.txt", new[] { prefixTextBox.Text, suffixTextBox.Text });
+        File.WriteAllLines(fixPath, new[] { prefixTextBox.Text, suffixTextBox.Text });
     }
 }
