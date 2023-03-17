@@ -5,15 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClipCMD"
         mc:Ignorable="d"
-        Title="ClipCMD" Height="450" Width="800">
+        Title="ClipCMD" Height="450" Width="800"
+        Closing="OnClose" StateChanged="OnStateChanged" Icon="logo.ico">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Label Content="Prefix:" Width="45" />
-            <TextBox x:Name="prefixTextBox" KeyUp="FixTextBox_TextChanged" Text="01" />
+            <TextBox x:Name="prefixTextBox" KeyUp="FixTextBox_TextChanged" Text="_" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Label Content="Suffix:" Width="45" />
-            <TextBox x:Name="suffixTextBox" KeyUp="FixTextBox_TextChanged" Text="01" />
+            <TextBox x:Name="suffixTextBox" KeyUp="FixTextBox_TextChanged" Text="_" />
         </StackPanel>
 
         <Grid DockPanel.Dock="Top" VerticalAlignment="Stretch">
@@ -23,13 +24,18 @@
             </Grid.ColumnDefinitions>
 
             <DockPanel Grid.Column="0">
-                <Label DockPanel.Dock="Top" Content="Static Commands:" />
-                <TextBox DockPanel.Dock="Top" x:Name="commandsTextBox" TextChanged="StaticCommandsTextBox_TextChanged" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Stretch" />
+                <Label DockPanel.Dock="Top" Content="Commands:" />
+                <TextBox DockPanel.Dock="Top" x:Name="commandsTextBox" HorizontalScrollBarVisibility="Visible" TextChanged="StaticCommandsTextBox_TextChanged" AcceptsReturn="True" VerticalAlignment="Stretch" />
             </DockPanel>
 
-            <DockPanel Grid.Column="1">
+            <DockPanel x:Name="logPanel" Grid.Column="1">
                 <Label DockPanel.Dock="Top" Content="History:" />
                 <ListBox DockPanel.Dock="Top"  x:Name="logListBox" VerticalAlignment="Stretch" />
+            </DockPanel>
+
+            <DockPanel Visibility="Collapsed" x:Name="errorPanel"  Grid.Column="1">
+                <Label DockPanel.Dock="Top" Content="Errors:" />
+                <ListBox DockPanel.Dock="Top"  x:Name="errorListBox" Foreground="Red" VerticalAlignment="Stretch" />
             </DockPanel>
         </Grid>
     </DockPanel>

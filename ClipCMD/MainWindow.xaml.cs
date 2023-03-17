@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Management.Automation.Language;
 using System.Text;
 using System.Windows;
-using System.Windows.Media;
 
 using WindowsInput;
 using WindowsInput.Native;
@@ -20,11 +21,25 @@ public partial class MainWindow : Window
 {
     private readonly Dictionary<string, string> commands = new Dictionary<string, string>();
 
+    private readonly System.Windows.Forms.NotifyIcon notifyIcon;
+    private WindowState storedWindowState = WindowState.Normal;
+
     private readonly string cmdPath;
     private readonly string fixPath;
 
     public MainWindow()
     {
+        notifyIcon = new System.Windows.Forms.NotifyIcon
+        {
+            BalloonTipText = "ClipCMD has been minimized. Click the tray icon to show.",
+            BalloonTipTitle = "ClipCMD",
+            Text = "ClipCMD",
+            Icon = new System.Drawing.Icon("logo.ico"),
+            Visible = true
+        };
+
+        notifyIcon.Click += NotifyIcon_Click;
+
         InitializeComponent();
 
         string filePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -60,6 +75,30 @@ public partial class MainWindow : Window
                 File.Delete(fixPath);
             }
         }
+    }
+
+    private void OnClose(object? sender, CancelEventArgs args)
+    {
+        notifyIcon.Dispose();
+    }
+
+    private void OnStateChanged(object? sender, EventArgs args)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            Hide();
+            notifyIcon?.ShowBalloonTip(2000);
+        }
+        else
+        {
+            storedWindowState = WindowState;
+        }
+    }
+
+    private void NotifyIcon_Click(object? sender, EventArgs e)
+    {
+        Show();
+        WindowState = storedWindowState;
     }
 
     private IDataObject? oldData;
@@ -120,13 +159,14 @@ public partial class MainWindow : Window
 
     private void StaticCommandsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        //TODO parse commands
-
         string[] lines = commandsTextBox.Text.Split('\n').Append("[#END#]").ToArray();
         string commandNames = string.Empty;
         StringBuilder script = new StringBuilder();
 
-        commandsTextBox.Foreground = Brushes.Black;
+        commandsTextBox.Foreground = System.Windows.Media.Brushes.Black;
+        errorPanel.Visibility = Visibility.Collapsed;
+        logPanel.Visibility = Visibility.Visible;
+        errorListBox.Items.Clear();
         commands.Clear();
 
         foreach (string l in lines)
@@ -137,16 +177,25 @@ public partial class MainWindow : Window
             {
                 if (!string.IsNullOrEmpty(commandNames))
                 {
+                    _ = Parser.ParseInput(script.ToString(), out _, out ParseError[] errors);
+
+                    if (errors.Length > 0)
+                    {
+                        foreach (ParseError error in errors)
+                        {
+                            AddError($"[{commandNames}]\n{error}");
+                        }
+                    }
+
                     foreach (string commandName in commandNames.Split(','))
                     {
-                        if (!string.IsNullOrWhiteSpace(commandName) && commands.TryAdd(commandName.Trim(), script.ToString()))
+                        if (string.IsNullOrWhiteSpace(commandName))
                         {
-                            commandsTextBox.Foreground = Brushes.Black;
+                            AddError($"[{commandNames}]\nCommand \"{commandName}\" is empty!");
                         }
-                        else
+                        else if (!commands.TryAdd(commandName.Trim(), script.ToString()))
                         {
-                            commandsTextBox.Foreground = Brushes.Red;
-                            return;
+                            AddError($"[{commandNames}]\nCommand \"{commandName}\" already exists!");
                         }
                     }
                 }
@@ -163,12 +212,22 @@ public partial class MainWindow : Window
             }
             else
             {
-                commandsTextBox.Foreground = Brushes.Red;
+                AddError($"[{commandNames}]\nInput has to start with [<Command Name>]!");
                 return;
             }
         }
 
+        _ = commands.TryAdd("list", $"\"{string.Join(", ", commands.Keys)}\"");
+
         File.WriteAllText(cmdPath, commandsTextBox.Text);
+    }
+
+    private void AddError(string error)
+    {
+        errorPanel.Visibility = Visibility.Visible;
+        logPanel.Visibility = Visibility.Collapsed;
+        commandsTextBox.Foreground = System.Windows.Media.Brushes.Red;
+        _ = errorListBox.Items.Add(error);
     }
 
     private void FixTextBox_TextChanged(object sender, System.Windows.Input.KeyEventArgs e)
