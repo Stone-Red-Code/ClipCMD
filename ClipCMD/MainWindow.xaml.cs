@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.FileIO;
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -125,23 +127,45 @@ public partial class MainWindow : Window
                 return;
             }
 
-            clipboardText = clipboardText[prefixTextBox.Text.Length..^suffixTextBox.Text.Length].Trim();
+            clipboardText = clipboardText[prefixTextBox.Text.Length..^suffixTextBox.Text.Length].Trim().Replace("\"\"", "\0");
 
-            if (!commands.TryGetValue(clipboardText, out string? script))
+            TextFieldParser parser = new TextFieldParser(new StringReader(clipboardText))
+            {
+                HasFieldsEnclosedInQuotes = true
+            };
+
+            parser.SetDelimiters(" ");
+
+            string[] sections = parser.ReadFields() ?? Array.Empty<string>();
+
+            sections = sections.Select(s => s.Replace('\0', '\"')).ToArray();
+
+            if (sections.Length == 0)
+            {
+                return;
+            }
+
+            string command = sections[0].Trim();
+
+            if (!commands.TryGetValue(command, out string? script))
             {
                 oldData = Clipboard.GetDataObject();
                 return;
             }
 
-            PowerShell ps = PowerShell.Create().AddScript(script);
+            PowerShell ps = PowerShell
+                .Create()
+                .AddScript(script)
+                .AddParameters(sections.Skip(1).ToList());
+
             StringBuilder outText = new StringBuilder();
 
             foreach (PSObject commandResult in ps.Invoke())
             {
-                _ = outText.AppendLine(commandResult.ToString());
+                _ = outText.AppendLine(commandResult?.ToString() ?? string.Empty);
             }
 
-            logListBox.Items.Insert(0, $"{clipboardText} > {outText.ToString().TrimEnd()}");
+            logListBox.Items.Insert(0, $"{command} > {outText.ToString().TrimEnd()}");
 
             Clipboard.SetText(outText.ToString().TrimEnd());
 
@@ -183,7 +207,7 @@ public partial class MainWindow : Window
                     {
                         foreach (ParseError error in errors)
                         {
-                            AddError($"[{commandNames}]\n{error}");
+                            AddError(commandNames, error.ToString());
                         }
                     }
 
@@ -191,11 +215,11 @@ public partial class MainWindow : Window
                     {
                         if (string.IsNullOrWhiteSpace(commandName))
                         {
-                            AddError($"[{commandNames}]\nCommand \"{commandName}\" is empty!");
+                            AddError(commandNames, "Command \"{commandName}\" is empty!");
                         }
                         else if (!commands.TryAdd(commandName.Trim(), script.ToString()))
                         {
-                            AddError($"[{commandNames}]\nCommand \"{commandName}\" already exists!");
+                            AddError(commandNames, "Command \"{commandName}\" already exists!");
                         }
                     }
                 }
@@ -212,7 +236,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                AddError($"[{commandNames}]\nInput has to start with [<Command Name>]!");
+                AddError(commandNames, "Input has to start with [<Command Name>]!");
                 return;
             }
         }
@@ -222,12 +246,12 @@ public partial class MainWindow : Window
         File.WriteAllText(cmdPath, commandsTextBox.Text);
     }
 
-    private void AddError(string error)
+    private void AddError(string commandNames, string error)
     {
         errorPanel.Visibility = Visibility.Visible;
         logPanel.Visibility = Visibility.Collapsed;
         commandsTextBox.Foreground = System.Windows.Media.Brushes.Red;
-        _ = errorListBox.Items.Add(error);
+        _ = errorListBox.Items.Add($"[{commandNames}]\n{error}");
     }
 
     private void FixTextBox_TextChanged(object sender, System.Windows.Input.KeyEventArgs e)
