@@ -44,11 +44,16 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
-        string filePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string workPath = Path.GetDirectoryName(filePath) ?? "/";
+        string applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string folderPath = Path.Combine(applicationDataPath, "ClipCMD");
 
-        cmdPath = Path.Combine(workPath, "cmd.txt");
-        fixPath = Path.Combine(workPath, "fix.txt");
+        if (!Directory.Exists(folderPath))
+        {
+            _ = Directory.CreateDirectory(folderPath);
+        }
+
+        cmdPath = Path.Combine(folderPath, "cmd.txt");
+        fixPath = Path.Combine(folderPath, "fix.txt");
     }
 
     protected override void OnSourceInitialized(EventArgs e)
