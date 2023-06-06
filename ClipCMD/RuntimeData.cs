@@ -12,6 +12,7 @@ public class RuntimeData : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private bool autoTypeRunning = false;
+    private string commandsInfo = string.Empty;
     private string commandsText = string.Empty;
     private Visibility errorPanelVisible = Visibility.Collapsed;
     private Visibility logPanelVisible = Visibility.Visible;
@@ -26,6 +27,16 @@ public class RuntimeData : INotifyPropertyChanged
         }
     }
 
+    public string CommandsInfo
+    {
+        get => commandsInfo;
+        set
+        {
+            commandsInfo = value;
+            OnPropertyChanged();
+        }
+    }
+
     public string CommandsText
     {
         get => commandsText;
@@ -36,7 +47,7 @@ public class RuntimeData : INotifyPropertyChanged
         }
     }
 
-    public Color CommandsTextColor => Errors.Count > 0 ? Colors.Red : Colors.Black;
+    public Brush CommandsTextColor => Errors.Count > 0 ? Brushes.Red : Brushes.Black;
 
     public Visibility ErrorPanelVisible
     {
@@ -68,6 +79,7 @@ public class RuntimeData : INotifyPropertyChanged
         {
             ErrorPanelVisible = Errors.Any() ? Visibility.Visible : Visibility.Collapsed;
             LogPanelVisible = Errors.Any() ? Visibility.Collapsed : Visibility.Visible;
+            OnPropertyChanged(nameof(CommandsTextColor));
         };
     }
 

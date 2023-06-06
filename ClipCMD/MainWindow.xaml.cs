@@ -83,7 +83,7 @@ public partial class MainWindow : Window
         RuntimeData.Errors.Add($"[{commandNames}]\n{error}");
     }
 
-    private void CancelAutoType_Click(object sender, RoutedEventArgs e)
+    private void CancelAutoTypeButton_Click(object sender, RoutedEventArgs e)
     {
         RuntimeData.AutoTypeRunning = false;
     }
@@ -187,6 +187,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void CopyToClipboardButton_Click(object sender, RoutedEventArgs e)
+    {
+        Clipboard.SetText(RuntimeData.CommandsText);
+        _ = MessageBox.Show($"Successfully copied {commands.Count - 1} command(s) to clipboard!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void NotifyIcon_Click(object? sender, EventArgs e)
     {
         Show();
@@ -221,6 +227,8 @@ public partial class MainWindow : Window
         RuntimeData.Errors.Clear();
         commands.Clear();
 
+        RuntimeData.CommandsInfo = $"Lines: {lines.Length}    Commands: {commands.Count}    Errors: {RuntimeData.Errors.Count}";
+
         foreach (string l in lines)
         {
             string line = l.Trim('\n', '\r');
@@ -243,11 +251,15 @@ public partial class MainWindow : Window
                     {
                         if (string.IsNullOrWhiteSpace(commandName))
                         {
-                            AddError(commandNames, "Command \"{commandName}\" is empty!");
+                            AddError(commandNames, $"Command \"{commandName}\" is empty!");
+                        }
+                        else if (commandName.Any(char.IsWhiteSpace))
+                        {
+                            AddError(commandNames, $"Command \"{commandName}\" can't contain white spaces!");
                         }
                         else if (!commands.TryAdd(commandName.Trim(), script.ToString()))
                         {
-                            AddError(commandNames, "Command \"{commandName}\" already exists!");
+                            AddError(commandNames, $"Command \"{commandName}\" already exists!");
                         }
                     }
                 }
@@ -268,6 +280,8 @@ public partial class MainWindow : Window
                 return;
             }
         }
+
+        RuntimeData.CommandsInfo = $"Lines: {lines.Length}    Commands: {commands.Count}    Errors: {RuntimeData.Errors.Count}";
 
         _ = commands.TryAdd("list", $"\"{string.Join(", ", commands.Keys)}\"");
 

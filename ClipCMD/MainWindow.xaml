@@ -48,7 +48,7 @@
                         <TextBox Text="{Binding Settings.AutoTypeDelay, UpdateSourceTrigger=PropertyChanged}" Width="50" Height="20" />
                     </StackPanel>
                 </StackPanel>
-                <Button Content="Cancel AutoType" Click="CancelAutoType_Click" IsEnabled="{Binding RuntimeData.AutoTypeRunning}" />
+                <Button Content="Cancel AutoType" Click="CancelAutoTypeButton_Click" IsEnabled="{Binding RuntimeData.AutoTypeRunning}" />
             </StackPanel>
         </Grid>
         <Grid DockPanel.Dock="Top" VerticalAlignment="Stretch">
@@ -59,7 +59,16 @@
 
             <DockPanel Grid.Column="0">
                 <Label DockPanel.Dock="Top" Content="Commands:" />
-                <TextBox DockPanel.Dock="Top" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" Text="{Binding RuntimeData.CommandsText, UpdateSourceTrigger=PropertyChanged}" Foreground="{Binding RuntimeData.CommandsTextColor}" TextChanged="StaticCommandsTextBox_TextChanged" AcceptsReturn="True" VerticalAlignment="Stretch" />
+
+                <Grid DockPanel.Dock="Bottom">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="100" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Margin="4,0,0,3" Text="{Binding RuntimeData.CommandsInfo}" />
+                    <Button Grid.Column="1" Background="AliceBlue" Content="Copy to clipboard" Click="CopyToClipboardButton_Click" />
+                </Grid>
+                <TextBox DockPanel.Dock="Top" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Text="{Binding RuntimeData.CommandsText, UpdateSourceTrigger=PropertyChanged}" Foreground="{Binding RuntimeData.CommandsTextColor}" TextChanged="StaticCommandsTextBox_TextChanged" AcceptsReturn="True" VerticalAlignment="Stretch" />
             </DockPanel>
 
             <DockPanel Visibility="{Binding RuntimeData.LogPanelVisible}" Grid.Column="1">
