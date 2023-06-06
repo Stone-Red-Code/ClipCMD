@@ -9,6 +9,8 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Language;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 
 using WindowsInput;
@@ -22,12 +24,13 @@ namespace ClipCMD;
 public partial class MainWindow : Window
 {
     private readonly Dictionary<string, string> commands = new Dictionary<string, string>();
-
+    private readonly string commandsPath;
     private readonly System.Windows.Forms.NotifyIcon notifyIcon;
+    private readonly string settingsPath;
+    private IDataObject? oldData;
     private WindowState storedWindowState = WindowState.Normal;
-
-    private readonly string cmdPath;
-    private readonly string fixPath;
+    public RuntimeData RuntimeData { get; set; } = new();
+    public Settings Settings { get; set; } = new();
 
     public MainWindow()
     {
@@ -42,8 +45,6 @@ public partial class MainWindow : Window
 
         notifyIcon.Click += NotifyIcon_Click;
 
-        InitializeComponent();
-
         string applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string folderPath = Path.Combine(applicationDataPath, "ClipCMD");
 
@@ -52,65 +53,42 @@ public partial class MainWindow : Window
             _ = Directory.CreateDirectory(folderPath);
         }
 
-        cmdPath = Path.Combine(folderPath, "cmd.txt");
-        fixPath = Path.Combine(folderPath, "fix.txt");
+        commandsPath = Path.Combine(folderPath, "cmd.txt");
+        settingsPath = Path.Combine(folderPath, "settings.txt");
+
+        if (File.Exists(commandsPath))
+        {
+            RuntimeData.CommandsText = File.ReadAllText(commandsPath);
+        }
+
+        if (File.Exists(settingsPath))
+        {
+            Settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath)) ?? new Settings();
+        }
+
+        DataContext = this;
+
+        InitializeComponent();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
-        base.OnSourceInitialized(e);
-
         // Initialize the clipboard now that we have a window source to use
         ClipboardManager windowClipboardManager = new ClipboardManager(this);
         windowClipboardManager.ClipboardChanged += ClipboardManager_ClipboardChanged;
-
-        if (File.Exists(cmdPath))
-        {
-            commandsTextBox.Text = File.ReadAllText(cmdPath);
-        }
-
-        if (File.Exists(fixPath))
-        {
-            string[] lines = File.ReadAllLines(fixPath);
-            if (lines.Length == 2)
-            {
-                prefixTextBox.Text = lines[0];
-                suffixTextBox.Text = lines[1];
-            }
-            else
-            {
-                File.Delete(fixPath);
-            }
-        }
     }
 
-    private void OnClose(object? sender, CancelEventArgs args)
+    private void AddError(string commandNames, string error)
     {
-        notifyIcon.Dispose();
+        RuntimeData.Errors.Add($"[{commandNames}]\n{error}");
     }
 
-    private void OnStateChanged(object? sender, EventArgs args)
+    private void CancelAutoType_Click(object sender, RoutedEventArgs e)
     {
-        if (WindowState == WindowState.Minimized)
-        {
-            Hide();
-            notifyIcon?.ShowBalloonTip(2000);
-        }
-        else
-        {
-            storedWindowState = WindowState;
-        }
+        RuntimeData.AutoTypeRunning = false;
     }
 
-    private void NotifyIcon_Click(object? sender, EventArgs e)
-    {
-        Show();
-        WindowState = storedWindowState;
-    }
-
-    private IDataObject? oldData;
-
-    private void ClipboardManager_ClipboardChanged(object? sender, EventArgs e)
+    private async void ClipboardManager_ClipboardChanged(object? sender, EventArgs e)
     {
         if (!Clipboard.ContainsText() || (oldData is not null && Clipboard.IsCurrent(oldData)))
         {
@@ -126,13 +104,13 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (!clipboardText.StartsWith(prefixTextBox.Text) || !clipboardText.EndsWith(suffixTextBox.Text))
+            if (!clipboardText.StartsWith(Settings.Prefix) || !clipboardText.EndsWith(Settings.Suffix))
             {
                 oldData = Clipboard.GetDataObject();
                 return;
             }
 
-            clipboardText = clipboardText[prefixTextBox.Text.Length..^suffixTextBox.Text.Length].Trim().Replace("\"\"", "\0");
+            clipboardText = clipboardText[Settings.Prefix.Length..^Settings.Suffix.Length].Trim().Replace("\"\"", "\0");
 
             TextFieldParser parser = new TextFieldParser(new StringReader(clipboardText))
             {
@@ -170,32 +148,77 @@ public partial class MainWindow : Window
                 _ = outText.AppendLine(commandResult?.ToString() ?? string.Empty);
             }
 
-            logListBox.Items.Insert(0, $"{command} > {outText.ToString().TrimEnd()}");
+            RuntimeData.Logs.Insert(0, $"{command} > {outText.ToString().TrimEnd()}");
 
-            Clipboard.SetText(outText.ToString().TrimEnd());
+            InputSimulator inputSimulator = new InputSimulator();
 
             oldData = Clipboard.GetDataObject();
 
-            InputSimulator inputSimulator = new InputSimulator();
-            _ = inputSimulator.Keyboard.ModifiedKeyStroke(new[] { VirtualKeyCode.CONTROL }, new[] { VirtualKeyCode.VK_V });
+            if (Settings.Mode == ClipCMDMode.ClipBoard)
+            {
+                Clipboard.SetText(outText.ToString().TrimEnd());
+
+                if (Settings.AutoPaste)
+                {
+                    _ = inputSimulator.Keyboard.ModifiedKeyStroke(new[] { VirtualKeyCode.CONTROL }, new[] { VirtualKeyCode.VK_V });
+                }
+            }
+            else if (Settings.Mode == ClipCMDMode.AutoType)
+            {
+                RuntimeData.AutoTypeRunning = true;
+
+                foreach (char c in outText.ToString())
+                {
+                    _ = inputSimulator.Keyboard.TextEntry(c);
+                    await Task.Delay(Settings.AutoTypeDelay);
+                    if (!RuntimeData.AutoTypeRunning)
+                    {
+                        break;
+                    }
+                }
+
+                RuntimeData.AutoTypeRunning = false;
+            }
         }
         catch (Exception ex)
         {
-            logListBox.Items.Insert(0, $"Error: {ex.Message}");
+            RuntimeData.Logs.Insert(0, $"Error: {ex.Message}");
             Debug.WriteLine(ex);
+        }
+    }
+
+    private void NotifyIcon_Click(object? sender, EventArgs e)
+    {
+        Show();
+        WindowState = storedWindowState;
+    }
+
+    private void OnClose(object? sender, CancelEventArgs args)
+    {
+        notifyIcon.Dispose();
+        File.WriteAllText(settingsPath, JsonSerializer.Serialize(Settings));
+    }
+
+    private void OnStateChanged(object? sender, EventArgs args)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            Hide();
+            notifyIcon?.ShowBalloonTip(2000);
+        }
+        else
+        {
+            storedWindowState = WindowState;
         }
     }
 
     private void StaticCommandsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        string[] lines = commandsTextBox.Text.Split('\n').Append("[#END#]").ToArray();
+        string[] lines = RuntimeData.CommandsText.Split('\n').Append("[#END#]").ToArray();
         string commandNames = string.Empty;
         StringBuilder script = new StringBuilder();
 
-        commandsTextBox.Foreground = System.Windows.Media.Brushes.Black;
-        errorPanel.Visibility = Visibility.Collapsed;
-        logPanel.Visibility = Visibility.Visible;
-        errorListBox.Items.Clear();
+        RuntimeData.Errors.Clear();
         commands.Clear();
 
         foreach (string l in lines)
@@ -248,24 +271,6 @@ public partial class MainWindow : Window
 
         _ = commands.TryAdd("list", $"\"{string.Join(", ", commands.Keys)}\"");
 
-        File.WriteAllText(cmdPath, commandsTextBox.Text);
-    }
-
-    private void AddError(string commandNames, string error)
-    {
-        errorPanel.Visibility = Visibility.Visible;
-        logPanel.Visibility = Visibility.Collapsed;
-        commandsTextBox.Foreground = System.Windows.Media.Brushes.Red;
-        _ = errorListBox.Items.Add($"[{commandNames}]\n{error}");
-    }
-
-    private void FixTextBox_TextChanged(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (prefixTextBox is null || suffixTextBox is null)
-        {
-            return;
-        }
-
-        File.WriteAllLines(fixPath, new[] { prefixTextBox.Text, suffixTextBox.Text });
+        File.WriteAllText(commandsPath, RuntimeData.CommandsText);
     }
 }

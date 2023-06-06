@@ -5,18 +5,52 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClipCMD"
         mc:Ignorable="d"
+        d:DataContext ="{d:DesignInstance {x:Type local:MainWindow}, IsDesignTimeCreatable=True}"
         Title="ClipCMD" Height="450" Width="800"
         Closing="OnClose" StateChanged="OnStateChanged" Icon="logo.ico">
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label Content="Prefix:" Width="45" />
-            <TextBox x:Name="prefixTextBox" KeyUp="FixTextBox_TextChanged" Text="_" />
-        </StackPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label Content="Suffix:" Width="45" />
-            <TextBox x:Name="suffixTextBox" KeyUp="FixTextBox_TextChanged" Text="_" />
-        </StackPanel>
 
+    <Window.Resources>
+        <local:EnumBooleanConverter x:Key="EnumBooleanConverter" />
+    </Window.Resources>
+
+    <DockPanel>
+        <Grid DockPanel.Dock="Top">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Prefix:" Width="45" />
+                    <TextBox Text="{Binding Settings.Prefix, UpdateSourceTrigger=PropertyChanged}" MinWidth="50" Height="20" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Suffix:" Width="45" />
+                    <TextBox Text="{Binding Settings.Suffix,UpdateSourceTrigger=PropertyChanged}" MinWidth="50" Height="20" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Background="LightBlue" HorizontalAlignment="Right" Margin="10">
+                <Label Margin="0" Padding="0">Mode:</Label>
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="ClipBoard" GroupName="Mode" IsChecked="{Binding Settings.Mode, Converter={StaticResource EnumBooleanConverter}, ConverterParameter=ClipBoard}" Margin="0,0,10,0" />
+                    <StackPanel Orientation="Horizontal" IsEnabled="{Binding Settings.Mode, Converter={StaticResource EnumBooleanConverter}, ConverterParameter=ClipBoard}">
+                        <CheckBox Content="AutoPaste" IsChecked="{Binding Settings.AutoPaste}" />
+                    </StackPanel>
+                </StackPanel>
+                <Separator />
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="AutoType" GroupName="Mode" IsChecked="{Binding Settings.Mode, Converter={StaticResource EnumBooleanConverter}, ConverterParameter=AutoType}" Margin="0,0,10,0" />
+                    <StackPanel Orientation="Horizontal" IsEnabled="{Binding Settings.Mode, Converter={StaticResource EnumBooleanConverter}, ConverterParameter=AutoType}">
+                        <Label Padding="0,0,10,0">Delay:</Label>
+                        <TextBox Text="{Binding Settings.AutoTypeDelay, UpdateSourceTrigger=PropertyChanged}" Width="50" Height="20" />
+                    </StackPanel>
+                </StackPanel>
+                <Button Content="Cancel AutoType" Click="CancelAutoType_Click" IsEnabled="{Binding RuntimeData.AutoTypeRunning}" />
+            </StackPanel>
+        </Grid>
         <Grid DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
@@ -25,17 +59,17 @@
 
             <DockPanel Grid.Column="0">
                 <Label DockPanel.Dock="Top" Content="Commands:" />
-                <TextBox DockPanel.Dock="Top" x:Name="commandsTextBox" HorizontalScrollBarVisibility="Visible" TextChanged="StaticCommandsTextBox_TextChanged" AcceptsReturn="True" VerticalAlignment="Stretch" />
+                <TextBox DockPanel.Dock="Top" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" Text="{Binding RuntimeData.CommandsText, UpdateSourceTrigger=PropertyChanged}" Foreground="{Binding RuntimeData.CommandsTextColor}" TextChanged="StaticCommandsTextBox_TextChanged" AcceptsReturn="True" VerticalAlignment="Stretch" />
             </DockPanel>
 
-            <DockPanel x:Name="logPanel" Grid.Column="1">
+            <DockPanel Visibility="{Binding RuntimeData.LogPanelVisible}" Grid.Column="1">
                 <Label DockPanel.Dock="Top" Content="History:" />
-                <ListBox DockPanel.Dock="Top"  x:Name="logListBox" VerticalAlignment="Stretch" />
+                <ListBox DockPanel.Dock="Top" VerticalAlignment="Stretch" ItemsSource="{Binding RuntimeData.Logs}" />
             </DockPanel>
 
-            <DockPanel Visibility="Collapsed" x:Name="errorPanel"  Grid.Column="1">
+            <DockPanel Visibility="{Binding RuntimeData.ErrorPanelVisible}" Grid.Column="1">
                 <Label DockPanel.Dock="Top" Content="Errors:" />
-                <ListBox DockPanel.Dock="Top"  x:Name="errorListBox" Foreground="Red" VerticalAlignment="Stretch" />
+                <ListBox DockPanel.Dock="Top" Foreground="Red" VerticalAlignment="Stretch" ItemsSource="{Binding RuntimeData.Errors}" />
             </DockPanel>
         </Grid>
     </DockPanel>
