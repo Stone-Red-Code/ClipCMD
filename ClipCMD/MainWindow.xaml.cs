@@ -253,7 +253,7 @@ public partial class MainWindow : Window
                         {
                             AddError(commandNames, $"Command \"{commandName}\" is empty!");
                         }
-                        else if (commandName.Any(char.IsWhiteSpace))
+                        else if (commandName.Trim().Any(char.IsWhiteSpace))
                         {
                             AddError(commandNames, $"Command \"{commandName}\" can't contain white spaces!");
                         }
