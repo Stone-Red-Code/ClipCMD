@@ -50,3 +50,7 @@ ClipCMD uses [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting
 ## Preview
 
 <img width="591" alt="image" src="https://user-images.githubusercontent.com/56473591/226146460-d9d2e8fc-3754-44c7-bc43-2e32f1d07847.png">
+
+## Third party licences
+- [InputSimulator](https://www.nuget.org/packages/InputSimulator) - [Ms-PL](https://inputsimulator.codeplex.com/license)
+
