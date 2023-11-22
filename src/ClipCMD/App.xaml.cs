@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Windows;
 
@@ -26,11 +27,18 @@ public partial class App : Application
             Current.Shutdown();
         }
 
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
         Exit += CloseHandler;
     }
 
     protected void CloseHandler(object sender, EventArgs e)
     {
         mutex?.ReleaseMutex();
+    }
+
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        File.WriteAllText("error.log", e.ExceptionObject.ToString());
     }
 }
