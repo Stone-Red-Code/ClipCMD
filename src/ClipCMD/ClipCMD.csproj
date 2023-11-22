@@ -20,8 +20,8 @@
 
     <ItemGroup>
         <PackageReference Include="InputSimulator" Version="1.0.4" />
-        <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.0.0" />
-        <PackageReference Include="System.Management.Automation" Version="7.0.0" />
+        <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.0" />
+        <PackageReference Include="System.Management.Automation" Version="7.4.0" />
         <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     </ItemGroup>
 
