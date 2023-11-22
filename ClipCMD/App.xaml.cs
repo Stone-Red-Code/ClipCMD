@@ -8,11 +8,12 @@ namespace ClipCMD;
 /// </summary>
 public partial class App : Application
 {
+    Mutex mutex;
     protected override void OnStartup(StartupEventArgs e)
     {
         const string appName = "ClipCMD";
 
-        _ = new Mutex(true, appName, out bool createdNew);
+        mutex = new Mutex(true, appName, out bool createdNew);
 
         if (!createdNew)
         {
