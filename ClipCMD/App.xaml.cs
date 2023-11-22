@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Windows;
 
 namespace ClipCMD;
@@ -8,20 +9,28 @@ namespace ClipCMD;
 /// </summary>
 public partial class App : Application
 {
-    Mutex mutex;
+    public const string AppName = "ClipCMD";
+
+    public const string AppGuid = "68d780d4-b946-4154-8815-e4632e5ec5d8";
+
+    private Mutex? mutex;
+
     protected override void OnStartup(StartupEventArgs e)
     {
-        const string appName = "ClipCMD";
-
-        mutex = new Mutex(true, appName, out bool createdNew);
+        mutex = new Mutex(true, AppGuid, out bool createdNew);
 
         if (!createdNew)
         {
             //App is already running! Exiting the application
-            _ = MessageBox.Show($"Another instance of {appName} already running!", $"{appName} is already running!", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            _ = MessageBox.Show($"Another instance of {AppName} already running!", $"{AppName} is already running!", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             Current.Shutdown();
         }
 
-        base.OnStartup(e);
+        Exit += CloseHandler;
+    }
+
+    protected void CloseHandler(object sender, EventArgs e)
+    {
+        mutex?.ReleaseMutex();
     }
 }

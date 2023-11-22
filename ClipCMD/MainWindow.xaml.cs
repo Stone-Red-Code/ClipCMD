@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Language;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ public partial class MainWindow : Window
 
         notifyIcon.Click += NotifyIcon_Click;
 
-        string applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string applicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StoneRed");
         string folderPath = Path.Combine(applicationDataPath, "ClipCMD");
 
         if (!Directory.Exists(folderPath))
@@ -69,6 +70,12 @@ public partial class MainWindow : Window
         DataContext = this;
 
         InitializeComponent();
+
+#if DEBUG
+        Title = $"{App.AppName} - Dev {Assembly.GetExecutingAssembly().GetName().Version}";
+#else
+        Title = $"{App.AppName} - {Assembly.GetExecutingAssembly().GetName().Version}";
+#endif
     }
 
     protected override void OnSourceInitialized(EventArgs e)
