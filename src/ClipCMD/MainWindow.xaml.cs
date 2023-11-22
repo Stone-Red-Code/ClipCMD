@@ -24,7 +24,7 @@ namespace ClipCMD;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private readonly Dictionary<string, string> commands = new Dictionary<string, string>();
+    private readonly Dictionary<string, string> commands = [];
     private readonly string commandsPath;
     private readonly System.Windows.Forms.NotifyIcon notifyIcon;
     private readonly string settingsPath;
@@ -149,10 +149,12 @@ public partial class MainWindow : Window
                 .AddParameters(sections.Skip(1).ToList());
 
             StringBuilder outText = new StringBuilder();
+            List<string> outputLines = [];
 
             foreach (PSObject commandResult in ps.Invoke())
             {
                 _ = outText.AppendLine(commandResult?.ToString() ?? string.Empty);
+                outputLines.Add(commandResult?.ToString().Trim() ?? string.Empty);
             }
 
             RuntimeData.Logs.Insert(0, $"{command} > {outText.ToString().TrimEnd()}");
@@ -163,7 +165,14 @@ public partial class MainWindow : Window
 
             if (Settings.Mode == ClipCMDMode.ClipBoard)
             {
-                Clipboard.SetText(outText.ToString().TrimEnd());
+                if (outputLines.TrueForAll(File.Exists))
+                {
+                    Clipboard.SetFileDropList([.. outputLines.ToArray()]);
+                }
+                else
+                {
+                    Clipboard.SetText(outText.ToString().TrimEnd());
+                }
 
                 if (Settings.AutoPaste)
                 {
