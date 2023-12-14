@@ -21,8 +21,7 @@ ClipCMD uses [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting
 
 ## Usage
 
-1. Download one of the [releases](https://github.com/Stone-Red-Code/ClipCMD/releases) or download it with [HyperbolicDownloader](https://github.com/Stone-Red-Code/HyperbolicDownloader)\
-   Hash for [HyperbolicDownloader](https://github.com/Stone-Red-Code/HyperbolicDownloader): `995d9d3f4191f96d07bd9ec3fbabd2a8bde6a3936b85af2258a7c5914b4defbf24bdb0cf0f94e8fe985a4c37fa11ad581a5a49662070eefc41a61adc6a4667bd`
+1. Download one of the [releases](https://github.com/Stone-Red-Code/ClipCMD/releases) by using the installer or download it with [HyperbolicDownloader](https://github.com/Stone-Red-Code/HyperbolicDownloader)
 1. Start `setup.exe`
 1. (Optional) Set the prefix and suffix for your commands
 1. Specify some commands in the built-in text field
