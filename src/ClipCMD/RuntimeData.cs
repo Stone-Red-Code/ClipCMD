@@ -59,7 +59,7 @@ public class RuntimeData : INotifyPropertyChanged
         }
     }
 
-    public ObservableCollection<string> Errors { get; } = new();
+    public ObservableCollection<string> Errors { get; } = [];
 
     public Visibility LogPanelVisible
     {
@@ -71,7 +71,7 @@ public class RuntimeData : INotifyPropertyChanged
         }
     }
 
-    public ObservableCollection<string> Logs { get; } = new();
+    public ObservableCollection<string> Logs { get; } = [];
 
     public RuntimeData()
     {

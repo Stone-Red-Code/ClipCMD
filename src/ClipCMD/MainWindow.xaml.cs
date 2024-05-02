@@ -126,7 +126,7 @@ public partial class MainWindow : Window
 
             parser.SetDelimiters(" ");
 
-            string[] sections = parser.ReadFields() ?? Array.Empty<string>();
+            string[] sections = parser.ReadFields() ?? [];
 
             sections = sections.Select(s => s.Replace('\0', '\"')).ToArray();
 
@@ -176,17 +176,24 @@ public partial class MainWindow : Window
 
                 if (Settings.AutoPaste)
                 {
-                    _ = inputSimulator.Keyboard.ModifiedKeyStroke(new[] { VirtualKeyCode.CONTROL }, new[] { VirtualKeyCode.VK_V });
+                    _ = inputSimulator.Keyboard.ModifiedKeyStroke([VirtualKeyCode.CONTROL], [VirtualKeyCode.VK_V]);
                 }
             }
             else if (Settings.Mode == ClipCMDMode.AutoType)
             {
                 RuntimeData.AutoTypeRunning = true;
 
+                while (inputSimulator.InputDeviceState.IsKeyDown(VirtualKeyCode.CONTROL))
+                {
+                    // Wait for CTRL key to be released
+                    await Task.Delay(100);
+                }
+
                 foreach (char c in outText.ToString())
                 {
                     _ = inputSimulator.Keyboard.TextEntry(c);
                     await Task.Delay(Settings.AutoTypeDelay);
+
                     if (!RuntimeData.AutoTypeRunning)
                     {
                         break;
@@ -236,7 +243,7 @@ public partial class MainWindow : Window
 
     private void StaticCommandsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        string[] lines = RuntimeData.CommandsText.Split('\n').Append("[#END#]").ToArray();
+        string[] lines = [.. RuntimeData.CommandsText.Split('\n'), "[#END#]"];
         string commandNames = string.Empty;
         StringBuilder script = new StringBuilder();
 
