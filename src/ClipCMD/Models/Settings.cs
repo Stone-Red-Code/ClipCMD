@@ -13,13 +13,15 @@ public class Settings
 
     public bool AutoPaste { get; set; } = true;
 
-    public int AutoTypeDelay { get; set; }
+    public int AutoTypeDelay { get; set; } = 100;
 
     public ClipCmdMode Mode { get; set; }
 
     public string Prefix { get; set; } = "#";
 
     public string Suffix { get; set; } = "";
+
+    public string CommandArgsSeperator { get; set; } = ":";
 
     public static void SaveSettings()
     {

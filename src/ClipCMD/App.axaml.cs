@@ -37,6 +37,7 @@ public partial class App : Application
             desktop.MainWindow.Closing += (sender, e) =>
             {
                 Settings.SaveSettings();
+                clipCmdCommandHandler.SaveCommands();
             };
 
             clipCmdCommandHandler.Start();

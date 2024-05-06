@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace ClipCmd.Views;
 
-public partial class MainView : UserControl
+public partial class InputDialogView : UserControl
 {
-    public MainView()
+    public InputDialogView()
     {
         InitializeComponent();
     }

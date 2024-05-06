@@ -21,4 +21,6 @@ internal static class Configuration
 
     public static string SettingsFilePath => Path.Combine(ApplicationDataPath, "settings.json");
     public static string LogFilePath => Path.Combine(ApplicationDataPath, $"ClipCMD.log");
+
+    public static string CommandsPath => Path.Combine(ApplicationDataPath, "commands.json");
 }

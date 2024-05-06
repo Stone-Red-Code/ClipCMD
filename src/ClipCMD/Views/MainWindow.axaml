@@ -3,10 +3,12 @@
         xmlns:vm="using:ClipCmd.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
         xmlns:views="clr-namespace:ClipCmd.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="ClipCmd.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="ClipCmd" Width="800" Height="450">
+
     <views:MainView />
 </Window>

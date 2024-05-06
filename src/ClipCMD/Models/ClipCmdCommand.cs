@@ -1,6 +1,6 @@
 ﻿namespace ClipCmd.Models;
 
-internal class ClipCmdCommand
+public class ClipCmdCommand(string script)
 {
-    public string Script { get; set; } = string.Empty;
+    public string Script { get; set; } = script;
 }
