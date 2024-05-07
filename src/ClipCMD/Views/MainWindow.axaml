@@ -7,8 +7,10 @@
         xmlns:views="clr-namespace:ClipCmd.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="ClipCmd.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="ClipCmd" Width="800" Height="450">
+        x:DataType="vm:ViewModelBase"
+        Icon="/Assets/logo.ico"
+        Title="{Binding Title}" Width="800" Height="450"
+        Closing="Window_Closing">
 
     <views:MainView />
 </Window>

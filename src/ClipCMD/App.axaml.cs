@@ -56,4 +56,23 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    private void TrayIcon_Clicked(object? sender, EventArgs e)
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow is not null)
+        {
+            desktop.MainWindow.WindowState = Avalonia.Controls.WindowState.Normal;
+            desktop.MainWindow.Show();
+            desktop.MainWindow.Activate();
+        }
+    }
+
+    private void NativeMenuItem_Click_Quit(object? sender, EventArgs e)
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            Settings.SaveSettings();
+            desktop.Shutdown();
+        }
+    }
 }

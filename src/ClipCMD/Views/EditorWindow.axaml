@@ -8,6 +8,7 @@
         x:Class="ClipCmd.Views.EditorWindow"
         x:DataType="vm:EditorViewModel"
         Title="{Binding Title}"
+        Icon="/Assets/logo.ico"
         Width="800" Height="450"
         WindowStartupLocation="CenterScreen"
         Loaded="Window_Loaded">

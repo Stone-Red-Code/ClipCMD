@@ -8,7 +8,7 @@ internal class EditorViewModel : ViewModelBase
 {
     private readonly ClipCmdCommandHandler clipCmdCommandHandler;
 
-    public string Title => $"ClipCMD Editor - {Name}";
+    public new string Title => $"{base.Title} - Editing {Name}";
 
     public string Name { get; }
 

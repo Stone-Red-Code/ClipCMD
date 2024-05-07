@@ -8,7 +8,7 @@ namespace ClipCmd.ViewModels;
 
 internal class InputDialogViewModel(string title, string defaultValue = "") : ViewModelBase
 {
-    public string Title { get; set; } = title;
+    public new string Title { get; set; } = title;
 
     public string Value { get; set; } = defaultValue;
 
