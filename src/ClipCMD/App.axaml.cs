@@ -12,6 +12,7 @@ using Projektanker.Icons.Avalonia.FontAwesome;
 using Projektanker.Icons.Avalonia.MaterialDesign;
 
 using System;
+using System.IO;
 
 namespace ClipCmd;
 
@@ -28,6 +29,11 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        if (!Directory.Exists(Configuration.ApplicationDataPath))
+        {
+            _ = Directory.CreateDirectory(Configuration.ApplicationDataPath);
+        }
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow();
