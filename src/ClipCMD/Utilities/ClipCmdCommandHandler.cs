@@ -7,6 +7,8 @@ using ClipCmd.Models;
 using SharpHook;
 using SharpHook.Native;
 
+using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -88,6 +90,7 @@ public class ClipCmdCommandHandler(Window window)
         string[] parameters = parts.Skip(1).Select(p => p.Replace("\0", Settings.Current.CommandArgsSeperator)).ToArray();
 
         StringBuilder outText = new StringBuilder();
+        Hashtable? returnAction = null;
 
         if (Commands.TryGetValue(commandName, out ClipCmdCommand? command))
         {
@@ -95,9 +98,26 @@ public class ClipCmdCommandHandler(Window window)
             _ = powerShell.AddScript(command.Script);
             _ = powerShell.AddParameters(parameters);
 
-            foreach (PSObject commandResult in await powerShell.InvokeAsync())
+            PSDataCollection<PSObject> commandResults = await powerShell.InvokeAsync();
+
+            foreach (PSObject commandResult in commandResults)
             {
-                _ = outText.AppendLine(commandResult?.ToString() ?? string.Empty);
+                // check if commandResult is string
+
+                if (commandResult.TypeNames.Contains("System.String"))
+                {
+                    _ = outText.AppendLine(commandResult.ToString());
+                }
+                else if (commandResult.BaseObject is Hashtable hashtable)
+                {
+                    if (commandResult == commandResults.LastOrDefault())
+                    {
+                        returnAction = hashtable;
+                        continue;
+                    }
+
+                    await ProcessActions(hashtable);
+                }
             }
         }
         else if (string.IsNullOrWhiteSpace(commandName) || string.IsNullOrEmpty(Settings.Current.Suffix + Settings.Current.Prefix))
@@ -121,17 +141,25 @@ public class ClipCmdCommandHandler(Window window)
 
             if (Settings.Current.AutoPaste)
             {
+                await Task.Delay(50);
                 _ = simulator.SimulateKeyPress(KeyCode.VcLeftControl);
                 _ = simulator.SimulateKeyPress(KeyCode.VcV);
 
                 _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
                 _ = simulator.SimulateKeyRelease(KeyCode.VcV);
+                await Task.Delay(50);
             }
         }
         else
         {
+            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcRightControl);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftAlt);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcRightAlt);
+
             foreach (char c in outText.ToString().TrimEnd())
             {
+                await Task.Delay(Settings.Current.AutoTypeDelay);
                 if (c == '\n')
                 {
                     _ = simulator.SimulateKeyPress(KeyCode.VcEnter);
@@ -139,10 +167,100 @@ public class ClipCmdCommandHandler(Window window)
                 }
 
                 _ = simulator.SimulateTextEntry(c.ToString());
-                await Task.Delay(Settings.Current.AutoTypeDelay);
             }
         }
 
+        if (returnAction is not null)
+        {
+            await ProcessActions(returnAction);
+        }
+
         lastText = string.Empty;
+    }
+
+    private async Task ProcessActions(Hashtable hashtable)
+    {
+        if (!hashtable.ContainsKey("Action") || hashtable["Action"] is not string action)
+        {
+            return;
+        }
+
+        if (action == "Paste")
+        {
+            if (!hashtable.ContainsKey("Text") || hashtable["Text"] is not string text)
+            {
+                return;
+            }
+
+            await clipboard.SetTextAsync(text);
+            await Task.Delay(50);
+            _ = simulator.SimulateKeyPress(KeyCode.VcLeftControl);
+            _ = simulator.SimulateKeyPress(KeyCode.VcV);
+
+            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcV);
+            await Task.Delay(50);
+        }
+        else if (action == "Type")
+        {
+            if (!hashtable.ContainsKey("Text") || hashtable["Text"] is not string text)
+            {
+                return;
+            }
+
+            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcRightControl);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftAlt);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcRightAlt);
+
+            foreach (char c in text)
+            {
+                await Task.Delay(Settings.Current.AutoTypeDelay);
+                if (c == '\n')
+                {
+                    _ = simulator.SimulateKeyPress(KeyCode.VcEnter);
+                    continue;
+                }
+
+                _ = simulator.SimulateTextEntry(c.ToString());
+            }
+        }
+        else if (action == "KeyPress")
+        {
+            if (!hashtable.ContainsKey("Key") || !Enum.TryParse(hashtable["Key"]?.ToString(), out KeyCode key))
+            {
+                return;
+            }
+
+            _ = simulator.SimulateKeyPress(key);
+        }
+        else if (action == "KeyRelease")
+        {
+            if (!hashtable.ContainsKey("Key") || !Enum.TryParse(hashtable["Key"]?.ToString(), out KeyCode key))
+            {
+                return;
+            }
+
+            _ = simulator.SimulateKeyRelease(key);
+        }
+        else if (action == "KeyStroke")
+        {
+            if (!hashtable.ContainsKey("Key") || !Enum.TryParse(hashtable["Key"]?.ToString(), out KeyCode key))
+            {
+                return;
+            }
+
+            _ = simulator.SimulateKeyPress(key);
+            _ = simulator.SimulateKeyRelease(key);
+        }
+        else if (action == "Delay")
+        {
+            if (!hashtable.ContainsKey("Delay") || hashtable["Delay"] is not int delay)
+            {
+                return;
+            }
+
+            await Task.Delay(delay);
+        }
     }
 }
