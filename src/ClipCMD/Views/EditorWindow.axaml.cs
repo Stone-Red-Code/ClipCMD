@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 using AvaloniaEdit;
 using AvaloniaEdit.TextMate;
@@ -35,7 +36,14 @@ public partial class EditorWindow : Window
             CheckScript(editorViewModel);
         };
 
-        RegistryOptions registryOptions = new RegistryOptions(ThemeName.DarkPlus);
+        ThemeName editorTheme = ThemeName.DarkPlus;
+
+        if (Avalonia.Application.Current?.ActualThemeVariant == ThemeVariant.Light)
+        {
+            editorTheme = ThemeName.LightPlus;
+        }
+
+        RegistryOptions registryOptions = new RegistryOptions(editorTheme);
         TextMate.Installation _textMateInstallation = textEditor.InstallTextMate(registryOptions);
 
         _textMateInstallation.SetGrammar(registryOptions.GetScopeByLanguageId(registryOptions.GetLanguageByExtension(".ps1").Id));

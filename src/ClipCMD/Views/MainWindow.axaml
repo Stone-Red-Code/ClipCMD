@@ -9,8 +9,7 @@
         x:Class="ClipCmd.Views.MainWindow"
         x:DataType="vm:ViewModelBase"
         Icon="/Assets/logo.ico"
-        Title="{Binding Title}" Width="800" Height="450"
-        Closing="Window_Closing">
+        Title="{Binding Title}" Width="800" Height="450">
 
     <views:MainView />
 </Window>

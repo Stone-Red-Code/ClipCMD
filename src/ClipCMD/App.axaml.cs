@@ -36,22 +36,19 @@ public partial class App : Application
 
             desktop.MainWindow.Closing += (sender, e) =>
             {
+                e.Cancel = true;
+
+                desktop.MainWindow.Hide();
+
                 Settings.SaveSettings();
                 clipCmdCommandHandler.SaveCommands();
             };
 
             clipCmdCommandHandler.Start();
         }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+        else
         {
-            /*
-            singleViewPlatform.MainView = new MainView()
-            {
-                DataContext = new MainViewModel()
-            }
-            */
-
-            throw new NotImplementedException();
+            throw new PlatformNotSupportedException();
         }
 
         base.OnFrameworkInitializationCompleted();
