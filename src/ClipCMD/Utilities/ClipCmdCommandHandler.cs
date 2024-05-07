@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -89,9 +88,6 @@ public class ClipCmdCommandHandler(Window window)
         string commandName = parts[0].Replace("\0", Settings.Current.CommandArgsSeperator);
         string[] parameters = parts.Skip(1).Select(p => p.Replace("\0", Settings.Current.CommandArgsSeperator)).ToArray();
 
-        StringBuilder outText = new StringBuilder();
-        Hashtable? returnAction = null;
-
         if (Commands.TryGetValue(commandName, out ClipCmdCommand? command))
         {
             PowerShell powerShell = PowerShell.Create();
@@ -106,16 +102,10 @@ public class ClipCmdCommandHandler(Window window)
 
                 if (commandResult.TypeNames.Contains("System.String"))
                 {
-                    _ = outText.AppendLine(commandResult.ToString());
+                    await Output(commandResult.ToString());
                 }
                 else if (commandResult.BaseObject is Hashtable hashtable)
                 {
-                    if (commandResult == commandResults.LastOrDefault())
-                    {
-                        returnAction = hashtable;
-                        continue;
-                    }
-
                     await ProcessActions(hashtable);
                 }
             }
@@ -126,54 +116,14 @@ public class ClipCmdCommandHandler(Window window)
         }
         else if (commandName == "list")
         {
-            _ = outText.AppendLine($"Commands: {string.Join(", ", Commands.Keys)}");
+            await Output($"Commands: {string.Join(", ", Commands.Keys)}");
         }
         else
         {
-            _ = outText.AppendLine("Command not found!");
+            await Output("Command not found!");
         }
 
         await clipboard.ClearAsync();
-
-        if (Settings.Current.Mode == ClipCmdMode.Clipboard)
-        {
-            await clipboard.SetTextAsync(outText.ToString().TrimEnd());
-
-            if (Settings.Current.AutoPaste)
-            {
-                await Task.Delay(50);
-                _ = simulator.SimulateKeyPress(KeyCode.VcLeftControl);
-                _ = simulator.SimulateKeyPress(KeyCode.VcV);
-
-                _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
-                _ = simulator.SimulateKeyRelease(KeyCode.VcV);
-                await Task.Delay(50);
-            }
-        }
-        else
-        {
-            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcRightControl);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftAlt);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcRightAlt);
-
-            foreach (char c in outText.ToString().TrimEnd())
-            {
-                await Task.Delay(Settings.Current.AutoTypeDelay);
-                if (c == '\n')
-                {
-                    _ = simulator.SimulateKeyPress(KeyCode.VcEnter);
-                    continue;
-                }
-
-                _ = simulator.SimulateTextEntry(c.ToString());
-            }
-        }
-
-        if (returnAction is not null)
-        {
-            await ProcessActions(returnAction);
-        }
 
         lastText = string.Empty;
     }
@@ -192,14 +142,14 @@ public class ClipCmdCommandHandler(Window window)
                 return;
             }
 
-            await clipboard.SetTextAsync(text);
-            await Task.Delay(50);
-            _ = simulator.SimulateKeyPress(KeyCode.VcLeftControl);
-            _ = simulator.SimulateKeyPress(KeyCode.VcV);
+            bool autoPaste = Settings.Current.AutoPaste;
 
-            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcV);
-            await Task.Delay(50);
+            if (hashtable.ContainsKey("AutoPaste") && hashtable["AutoPaste"] is bool autoPasteOverwrite)
+            {
+                autoPaste = autoPasteOverwrite;
+            }
+
+            await Paste(text, autoPaste);
         }
         else if (action == "Type")
         {
@@ -208,22 +158,14 @@ public class ClipCmdCommandHandler(Window window)
                 return;
             }
 
-            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcRightControl);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftAlt);
-            _ = simulator.SimulateKeyRelease(KeyCode.VcRightAlt);
+            int delay = Settings.Current.AutoTypeDelay;
 
-            foreach (char c in text)
+            if (hashtable.ContainsKey("Delay") && hashtable["Delay"] is int delayOverwrite)
             {
-                await Task.Delay(Settings.Current.AutoTypeDelay);
-                if (c == '\n')
-                {
-                    _ = simulator.SimulateKeyPress(KeyCode.VcEnter);
-                    continue;
-                }
-
-                _ = simulator.SimulateTextEntry(c.ToString());
+                delay = delayOverwrite;
             }
+
+            await Type(text, delay);
         }
         else if (action == "KeyPress")
         {
@@ -261,6 +203,54 @@ public class ClipCmdCommandHandler(Window window)
             }
 
             await Task.Delay(delay);
+        }
+    }
+
+    private async Task Output(string text)
+    {
+        if (Settings.Current.Mode == ClipCmdMode.Clipboard)
+        {
+            await Paste(text, Settings.Current.AutoPaste);
+        }
+        else
+        {
+            await Type(text, Settings.Current.AutoTypeDelay);
+        }
+    }
+
+    private async Task Paste(string text, bool autoPaste)
+    {
+        await clipboard.SetTextAsync(text);
+
+        if (autoPaste)
+        {
+            await Task.Delay(50);
+            _ = simulator.SimulateKeyPress(KeyCode.VcLeftControl);
+            _ = simulator.SimulateKeyPress(KeyCode.VcV);
+
+            _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
+            _ = simulator.SimulateKeyRelease(KeyCode.VcV);
+            await Task.Delay(50);
+        }
+    }
+
+    private async Task Type(string text, int delay)
+    {
+        _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
+        _ = simulator.SimulateKeyRelease(KeyCode.VcRightControl);
+        _ = simulator.SimulateKeyRelease(KeyCode.VcLeftAlt);
+        _ = simulator.SimulateKeyRelease(KeyCode.VcRightAlt);
+
+        foreach (char c in text)
+        {
+            await Task.Delay(delay);
+            if (c == '\n')
+            {
+                _ = simulator.SimulateKeyPress(KeyCode.VcEnter);
+                continue;
+            }
+
+            _ = simulator.SimulateTextEntry(c.ToString());
         }
     }
 }
