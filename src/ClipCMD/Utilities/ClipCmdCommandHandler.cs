@@ -224,13 +224,13 @@ public class ClipCmdCommandHandler(Window window)
 
         if (autoPaste)
         {
-            await Task.Delay(50);
+            await Task.Delay(10);
             _ = simulator.SimulateKeyPress(KeyCode.VcLeftControl);
             _ = simulator.SimulateKeyPress(KeyCode.VcV);
 
             _ = simulator.SimulateKeyRelease(KeyCode.VcLeftControl);
             _ = simulator.SimulateKeyRelease(KeyCode.VcV);
-            await Task.Delay(50);
+            await Task.Delay(10);
         }
     }
 
