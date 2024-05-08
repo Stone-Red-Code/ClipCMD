@@ -14,6 +14,7 @@ namespace ClipCmd.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private readonly ClipCmdCommandHandler clipCmdCommandHandler;
+    private readonly ImportExportService importExportService;
 
     public List<ClipCmdCommandItemViewModel> Commands => [.. clipCmdCommandHandler.Commands.Keys.Select(x => new ClipCmdCommandItemViewModel(x, clipCmdCommandHandler))];
 
@@ -105,10 +106,13 @@ public class MainViewModel : ViewModelBase
 
     public ICommand AddCommand => ReactiveCommand.Create(Add);
 
-    public MainViewModel(ClipCmdCommandHandler clipCmdCommandHandler)
+    public ICommand ExportCommand => ReactiveCommand.Create(importExportService.Export);
+    public ICommand ImportCommand => ReactiveCommand.Create(importExportService.Import);
+
+    public MainViewModel(ClipCmdCommandHandler clipCmdCommandHandler, ImportExportService importExportService)
     {
         this.clipCmdCommandHandler = clipCmdCommandHandler;
-
+        this.importExportService = importExportService;
         clipCmdCommandHandler.Commands.CollectionChanged += (sender, e) =>
         {
             this.RaisePropertyChanged(nameof(Commands));
@@ -119,6 +123,7 @@ public class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         clipCmdCommandHandler = new ClipCmdCommandHandler(new());
+        importExportService = new(new(), clipCmdCommandHandler);
     }
 
     private async void Add()

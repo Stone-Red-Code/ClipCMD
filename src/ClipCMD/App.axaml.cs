@@ -38,7 +38,8 @@ public partial class App : Application
         {
             desktop.MainWindow = new MainWindow();
             ClipCmdCommandHandler clipCmdCommandHandler = new ClipCmdCommandHandler(desktop.MainWindow);
-            desktop.MainWindow.DataContext = new MainViewModel(clipCmdCommandHandler);
+            ImportExportService importExportService = new ImportExportService(desktop.MainWindow, clipCmdCommandHandler);
+            desktop.MainWindow.DataContext = new MainViewModel(clipCmdCommandHandler, importExportService);
 
             desktop.MainWindow.Closing += (sender, e) =>
             {
