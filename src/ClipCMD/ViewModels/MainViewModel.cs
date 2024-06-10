@@ -82,7 +82,7 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    public string CommandArgsSeperator
+    public string CommandArgsSeparator
     {
         get => Settings.Current.CommandArgsSeperator;
         set

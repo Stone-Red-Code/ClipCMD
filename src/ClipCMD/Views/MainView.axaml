@@ -29,7 +29,7 @@
             <Grid RowDefinitions="Auto * Auto * Auto" VerticalAlignment="Stretch">
                 <TextBox Grid.Row="0" MaxLength="5" InnerLeftContent="Prefix:" Watermark="none" Text="{Binding Prefix}" />
                 <TextBox Grid.Row="2" MaxLength="5" InnerLeftContent="Suffix:" Watermark="none" Text="{Binding Suffix}" />
-                <TextBox Grid.Row="4" MaxLength="2" InnerLeftContent="Args seperator:" Text="{Binding CommandArgsSeperator}" />
+                <TextBox Grid.Row="4" MaxLength="2" InnerLeftContent="Args separator:" Text="{Binding CommandArgsSeparator}" />
             </Grid>
 
             <Label Grid.Column="1" Content="ClipCMD" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30" />
