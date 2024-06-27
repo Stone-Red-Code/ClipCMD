@@ -8,7 +8,6 @@ using AvaloniaEdit.TextMate;
 using ClipCmd.ViewModels;
 
 using System;
-using System.Diagnostics;
 using System.Management.Automation.Language;
 
 using TextMateSharp.Grammars;
@@ -61,7 +60,6 @@ public partial class EditorWindow : Window
         {
             foreach (ParseError parseError in parseErrors)
             {
-                Debug.WriteLine(parseError.Message + " at line " + parseError.Extent.StartLineNumber + " and column " + parseError.Extent.StartColumnNumber);
                 editorViewModel.Messages.Add(new($"Error: {parseError.Message} at line {parseError.Extent.StartLineNumber} and column {parseError.Extent.StartColumnNumber}", Brushes.Red));
             }
         }
