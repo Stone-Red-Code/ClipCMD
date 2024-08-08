@@ -123,7 +123,7 @@ public class ClipCmdCommandHandler(Window window)
             await Output("Command not found!");
         }
 
-        if (Settings.Current.Mode != ClipCmdMode.Clipboard && !Settings.Current.AutoPaste)
+        if (Settings.Current.Mode != ClipCmdMode.Clipboard || Settings.Current.AutoPaste)
         {
             await clipboard.ClearAsync();
         }
