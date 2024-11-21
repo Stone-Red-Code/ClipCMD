@@ -21,6 +21,25 @@ public partial class EditorWindow : Window
         InitializeComponent();
     }
 
+    private static void CheckScript(EditorViewModel editorViewModel)
+    {
+        _ = Parser.ParseInput(editorViewModel.Script, out _, out ParseError[] parseErrors);
+
+        editorViewModel.Messages.Clear();
+
+        if (parseErrors.Length > 0)
+        {
+            foreach (ParseError parseError in parseErrors)
+            {
+                editorViewModel.Messages.Add(new($"Error: {parseError.Message} at line {parseError.Extent.StartLineNumber} and column {parseError.Extent.StartColumnNumber}", Brushes.Red));
+            }
+        }
+        else
+        {
+            editorViewModel.Messages.Add(new("No errors", Brushes.Green));
+        }
+    }
+
     private void Window_Loaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         EditorViewModel editorViewModel = DataContext as EditorViewModel ?? throw new InvalidOperationException("DataContext is not EditorViewModel");
@@ -48,24 +67,5 @@ public partial class EditorWindow : Window
         _textMateInstallation.SetGrammar(registryOptions.GetScopeByLanguageId(registryOptions.GetLanguageByExtension(".ps1").Id));
 
         CheckScript(editorViewModel);
-    }
-
-    private void CheckScript(EditorViewModel editorViewModel)
-    {
-        _ = Parser.ParseInput(editorViewModel.Script, out _, out ParseError[] parseErrors);
-
-        editorViewModel.Messages.Clear();
-
-        if (parseErrors.Length > 0)
-        {
-            foreach (ParseError parseError in parseErrors)
-            {
-                editorViewModel.Messages.Add(new($"Error: {parseError.Message} at line {parseError.Extent.StartLineNumber} and column {parseError.Extent.StartColumnNumber}", Brushes.Red));
-            }
-        }
-        else
-        {
-            editorViewModel.Messages.Add(new("No errors", Brushes.Green));
-        }
     }
 }
