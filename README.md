@@ -26,16 +26,21 @@ ClipCMD uses [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting
 
 ## Example
 
-> Prefix: `_`\
-> Suffix: `_`\
+> Prefix: `#`\
+> Suffix: `+`\
 > Command name: `email`\
 > Command script: `Write-Output myCoolEmail@mail.com`\
-> Command script (alternative): `"myCoolEmail@mail.com"`\
+> Command script (alternative): `"myCoolEmail@mail.com"`
 
-> Input: `_email_`\
+> Input: `#email+`\
 > Output: `myCoolEmail@mail.com`
 
 ## Preview
+
+https://github.com/user-attachments/assets/a0665d6d-e6ce-4d78-88d0-e9c35214219d
+
+![ClipCMD-Preview_1](https://github.com/user-attachments/assets/6f136f65-ecf1-4426-a865-ecabd50689a2)
+![ClipCMD-Preview_2](https://github.com/user-attachments/assets/91274468-bb52-4b39-90a3-5fb623edf8a2)
 
 ## Third party licences
 
