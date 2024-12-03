@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ClipCmd.ViewModels"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ClipCmd.Views.InputDialogView"
+             x:DataType="vm:InputDialogViewModel"
+             MinWidth="300"
+             MinHeight="100"
+             Background="{DynamicResource SemiColorBackground0}">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Semi.Avalonia/Themes/Index.axaml" />
+    </UserControl.Styles>
+
+    <StackPanel Spacing="10">
+        <Label Content="{Binding Title}" />
+        <TextBox VerticalContentAlignment="Center" Text="{Binding Value}" />
+        <StackPanel Spacing="10" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Ok" Width="80" HorizontalContentAlignment="Center" Command="{Binding OkCommand}" />
+            <Button Content="Cancel" Width="80" HorizontalContentAlignment="Center" Command="{Binding CancelCommand}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

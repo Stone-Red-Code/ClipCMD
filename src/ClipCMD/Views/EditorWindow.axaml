@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ClipCmd.ViewModels"
+        xmlns:AvaloniaEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ClipCmd.Views.EditorWindow"
+        x:DataType="vm:EditorViewModel"
+        Title="{Binding Title}"
+        Icon="/Assets/logo.ico"
+        Width="800" Height="450"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Window_Loaded">
+    <Grid RowDefinitions="3* Auto 1*">
+        <AvaloniaEdit:TextEditor Name="Editor" ShowLineNumbers="True" FontFamily="Cascadia Code,Consolas,Menlo,Monospace" />
+        <Separator Grid.Row="1" Margin="0" />
+        <ScrollViewer  Grid.Row="2">
+            <ItemsControl ItemsSource="{Binding Messages}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Label Content="{Binding Message}" Foreground="{Binding Color}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</Window>
